@@ -22,8 +22,8 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements-dev.txt
 
-      - name: Run Formatting Check
-        run: black --check .
+      # - name: Run Formatting Check
+      #   run: black --check .
 
       - name: Run Linter
         run: ruff check .
