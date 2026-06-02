@@ -26,6 +26,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: .
+          file: ./Docker/Dockerfile
           load: true # CRITICAL: This keeps the image in the runner so Trivy can scan it
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/tsd-tutorial:yourname-${{ env.SHORT_SHA }}
 
@@ -43,5 +44,6 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: .
+          file: ./Docker/Dockerfile
           push: true # Now we actually push it!
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/tsd-tutorial:yourname-${{ env.SHORT_SHA }}
