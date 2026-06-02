@@ -1,0 +1,47 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        
+      - name: Get Short SHA
+        run: echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          # !!! IMPORTANT !!! - do not paste the login and token here directly!
+          # secrest should never be stored in repo code. Check the "Using secrets in GitHub Actions" docs.
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build Docker image (local)
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          load: true # CRITICAL: This keeps the image in the runner so Trivy can scan it
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/tsd-tutorial:yourname-${{ env.SHORT_SHA }}
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/tsd-tutorial:yourname-${{ env.SHORT_SHA }}
+          format: 'table'
+          exit-code: '0' # The base image has some known CVEs. That's why we do not want to fail the pipeline - just paste the info in a table.
+          # TODO: Check Trivy docs to configure 'vuln-type' and set 'severity' to 'CRITICAL,HIGH'
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Push Docker image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true # Now we actually push it!
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/tsd-tutorial:yourname-${{ env.SHORT_SHA }}
